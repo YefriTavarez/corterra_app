@@ -1,10 +1,16 @@
 # Copyright (c) 2024, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
-import fitz  # PyMuPDF
+import os
 import math
 
+import fitz  # PyMuPDF
+
+import frappe
 from frappe.model import naming
+
+__all__ = ("agregar_bounding_boxes", )
+
 
 def puntos_a_pulgadas(valor):
     """Convierte puntos a pulgadas."""
@@ -24,8 +30,23 @@ def calcular_siguiente_multiplo(valor, multiplo=6):
     return siguiente
 
 
+@frappe.whitelist()
 def agregar_bounding_boxes(pdf_path: str):
     """Agrega bounding boxes a un PDF."""
+
+    if pdf_path.endswith(".pdf"):
+        frappe.throw("El archivo PDF no tiene la extensión correcta.")
+
+    if not pdf_path:
+        frappe.throw("No se ha especificado un archivo PDF.")
+
+    base_path = frappe.utils.get_site_path()
+    if pdf_path.startswith("/private"):
+        pdf_path = f"{base_path}{pdf_path}"
+    elif pdf_path.startswith("/files"):
+        pdf_path = f"{base_path}/public{pdf_path}"
+    else:
+        frappe.throw("No se puede acceder al archivo PDF.")
 
     output_path = get_pdf_output_name()
 
