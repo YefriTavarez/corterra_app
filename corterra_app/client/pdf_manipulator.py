@@ -3,11 +3,11 @@
 
 import os
 import math
+import uuid
 
 import fitz  # PyMuPDF
 
 import frappe
-from frappe.model import naming
 
 __all__ = ("agregar_bounding_boxes", )
 
@@ -189,8 +189,10 @@ def agregar_bounding_boxes(pdf_path: str, output_path: str = None):
 
 def get_pdf_output_name():
     """Genera un nombre de archivo para el PDF de salida."""
-    seq = naming.make_autoname(".YY.MM.DD.##")
+    # from frappe.model import naming
+    # seq = naming.make_autoname(".YY.MM.DD.##")
 
+    seq = uuid.uuid4()
     return f"{seq}.pdf"
 
 
