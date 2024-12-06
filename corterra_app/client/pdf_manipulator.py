@@ -36,11 +36,25 @@ def calcular_siguiente_multiplo(valor, multiplo=6):
     return siguiente
 
 
+def remove_trailing_zero(value):
+    """Remueve los ceros decimales al final de un número."""
+    if value.endswith("0"):
+        return remove_trailing_zero(value[:-1])
+    elif value.endswith("."):
+        return value[:-1]
+
+    return value
+
+
 @frappe.whitelist()
 def agregar_bounding_boxes(
     pdf_path: str, board_width: float, board_height: float, alignment: Literal["Center", "Bottom"], margin_bottom: Optional[float]
 ) -> str:
     """Agrega bounding boxes a un PDF."""
+
+    margin_bottom = pulgadas_a_puntos(
+        frappe.utils.flt(margin_bottom)
+    )
 
     output_path: str = None
 
@@ -175,6 +189,27 @@ def agregar_bounding_boxes(
         # Dibujar los rectángulos (después de transferir el contenido)
         nueva_pagina.draw_rect(rect_naranja, color=(1, 0.5, 0), width=2.0)  # Naranja
         nueva_pagina.draw_rect(rect_azul_centrado, color=(0.5, 0.8, 1), width=1.0)  # Azul
+
+        naranja_x = f"{ancho_naranja:.3f}"
+        naranja_y = f"{alto_naranja:.3f}"
+
+        azul_x = f"{ancho_azul:.3f}"
+        azul_y = f"{alto_azul:.3f}"
+
+        # Añadir leyenda con las dimensiones
+        legend_text = f"Dimensión Tablero: {remove_trailing_zero(naranja_x)} x {remove_trailing_zero(naranja_y)} in"
+        legend_text += f"\nDimensión Diseño: {remove_trailing_zero(azul_x)} x {remove_trailing_zero(azul_y)} in"
+        if alignment == "Bottom" and margin_bottom:
+            _margin = f"{puntos_a_pulgadas(margin_bottom):.3f}"
+
+            legend_text += f"\nMargen Inferior: {remove_trailing_zero(_margin)} in"
+
+        nueva_pagina.insert_text(
+            fitz.Point(10, 20),
+            legend_text,
+            fontsize=12,
+            color=(0, 0, 0)
+        )
 
         if DEBUG:
             print(f"Bounding box azul centrado: Ancho={ancho_azul:.3f}\" x Alto={alto_azul:.3f}\"")
