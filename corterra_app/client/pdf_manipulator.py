@@ -11,6 +11,8 @@ from frappe.model import naming
 
 __all__ = ("agregar_bounding_boxes", )
 
+# method = "corterra_app.client.pdf_manipulator.agregar_bounding_boxes"
+
 DEBUG = False
 
 
@@ -33,10 +35,10 @@ def calcular_siguiente_multiplo(valor, multiplo=6):
 
 
 @frappe.whitelist()
-def agregar_bounding_boxes(pdf_path: str):
+def agregar_bounding_boxes(pdf_path: str, output_path: str = None):
     """Agrega bounding boxes a un PDF."""
 
-    if pdf_path.endswith(".pdf"):
+    if not pdf_path.endswith(".pdf"):
         frappe.throw("El archivo PDF no tiene la extensión correcta.")
 
     if not pdf_path:
@@ -50,7 +52,27 @@ def agregar_bounding_boxes(pdf_path: str):
     else:
         frappe.throw("No se puede acceder al archivo PDF.")
 
-    output_path = get_pdf_output_name()
+    if output_path:       
+        if not output_path.endswith(".pdf"):
+            frappe.throw("El archivo de salida no tiene la extensión correcta.")
+
+        if output_path.startswith("/private"):
+            output_path = f"{base_path}{output_path}"
+        elif output_path.startswith("/files"):
+            output_path = f"{base_path}/public{output_path}"
+        else:
+            frappe.throw("No se puede acceder al archivo de salida.")
+        
+        if not os.path.exists(output_path):
+            frappe.throw("No se puede acceder al archivo de salida.")
+    else:
+        filename = get_pdf_output_name()
+        # output_path = f"/private/files/{filename}"
+        output_path = f"{base_path}/public/files/{filename}"
+        frappe.utils.touch_file(output_path)
+        
+    if not os.path.exists(pdf_path):
+        frappe.throw("El archivo PDF no existe.")
 
     doc = fitz.open(pdf_path)
     output_pdf = fitz.open()  # Crear un nuevo documento PDF
@@ -161,10 +183,15 @@ def agregar_bounding_boxes(pdf_path: str):
     if DEBUG:
         print(f"\nArchivo anotado guardado en: {output_path}")
 
+    return output_path \
+        .replace(f"{base_path}/public", "")
+
 
 def get_pdf_output_name():
     """Genera un nombre de archivo para el PDF de salida."""
-    return naming.make_autoname(".YY.MM.DD.##")
+    seq = naming.make_autoname(".YY.MM.DD.##")
+
+    return f"{seq}.pdf"
 
 
 if __name__ == "__main__":
