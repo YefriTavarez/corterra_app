@@ -1,6 +1,8 @@
 # Copyright (c) 2024, Yefri Tavarez and Contributors
 # For license information, please see license.txt
 
+from typing import Literal, Optional
+
 import os
 import math
 import uuid
@@ -35,8 +37,10 @@ def calcular_siguiente_multiplo(valor, multiplo=6):
 
 
 @frappe.whitelist()
-def agregar_bounding_boxes(pdf_path: str, output_path: str = None):
+def agregar_bounding_boxes(pdf_path: str, board_width: float, board_height: float, alignment: Literal["Center", "Bottom"], margin_bottom: Optional[float]) -> str:
     """Agrega bounding boxes a un PDF."""
+
+    output_path: str = None
 
     if not pdf_path.endswith(".pdf"):
         frappe.throw("El archivo PDF no tiene la extensión correcta.")
@@ -193,7 +197,7 @@ def get_pdf_output_name():
     # seq = naming.make_autoname(".YY.MM.DD.##")
 
     seq = uuid.uuid4()
-    return f"{seq}.pdf"
+    return f"AUTO-{seq}.pdf"
 
 
 if __name__ == "__main__":
