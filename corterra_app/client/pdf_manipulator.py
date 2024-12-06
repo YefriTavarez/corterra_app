@@ -37,13 +37,15 @@ def calcular_siguiente_multiplo(valor, multiplo=6):
 
 
 @frappe.whitelist()
-def agregar_bounding_boxes(pdf_path: str, board_width: float, board_height: float, alignment: Literal["Center", "Bottom"], margin_bottom: Optional[float]) -> str:
+def agregar_bounding_boxes(
+    pdf_path: str, board_width: float, board_height: float, alignment: Literal["Center", "Bottom"], margin_bottom: Optional[float]
+) -> str:
     """Agrega bounding boxes a un PDF."""
 
     output_path: str = None
 
     if not pdf_path.endswith(".pdf"):
-        frappe.throw("El archivo PDF no tiene la extensión correcta.")
+        frappe.throw("El archivo PDF no tiene la extensi��n correcta.")
 
     if not pdf_path:
         frappe.throw("No se ha especificado un archivo PDF.")
@@ -71,7 +73,6 @@ def agregar_bounding_boxes(pdf_path: str, board_width: float, board_height: floa
             frappe.throw("No se puede acceder al archivo de salida.")
     else:
         filename = get_pdf_output_name()
-        # output_path = f"/private/files/{filename}"
         output_path = f"{base_path}/public/files/{filename}"
         frappe.utils.touch_file(output_path)
         
@@ -127,8 +128,8 @@ def agregar_bounding_boxes(pdf_path: str, board_width: float, board_height: floa
         alto_azul = puntos_a_pulgadas(max_y - min_y)
 
         # Calcular Bounding Box Naranja
-        ancho_naranja = calcular_siguiente_multiplo(ancho_azul)
-        alto_naranja = calcular_siguiente_multiplo(alto_azul)
+        ancho_naranja = board_width
+        alto_naranja = board_height
         ancho_naranja_puntos = pulgadas_a_puntos(ancho_naranja)
         alto_naranja_puntos = pulgadas_a_puntos(alto_naranja)
 
@@ -141,8 +142,6 @@ def agregar_bounding_boxes(pdf_path: str, board_width: float, board_height: floa
         offset_naranja_x = (nuevo_ancho - ancho_naranja_puntos) / 2
         offset_naranja_y = (nuevo_alto - alto_naranja_puntos) / 2
 
-        # offset_naranja_x = (nuevo_ancho - ancho_naranja_puntos) / 2 - 0.5
-        # offset_naranja_y = (nuevo_alto - alto_naranja_puntos) / 2 - 0.5
         rect_naranja = fitz.Rect(
             offset_naranja_x,
             offset_naranja_y,
@@ -150,9 +149,13 @@ def agregar_bounding_boxes(pdf_path: str, board_width: float, board_height: floa
             offset_naranja_y + alto_naranja_puntos
         )
 
-        # Centrar Bounding Box Azul dentro del Naranja
+        # Calcular la alineación del Bounding Box Azul dentro del Naranja
+        if alignment == "Bottom":
+            offset_azul_y = rect_naranja.height - rect_azul.height - (margin_bottom or 0)
+        else:  # Center
+            offset_azul_y = (rect_naranja.height - rect_azul.height) / 2
+
         offset_azul_x = (rect_naranja.width - rect_azul.width) / 2
-        offset_azul_y = (rect_naranja.height - rect_azul.height) / 2
 
         rect_azul_centrado = fitz.Rect(
             rect_naranja.x0 + offset_azul_x,
@@ -177,7 +180,6 @@ def agregar_bounding_boxes(pdf_path: str, board_width: float, board_height: floa
             print(f"Bounding box azul centrado: Ancho={ancho_azul:.3f}\" x Alto={alto_azul:.3f}\"")
             print(f"Bounding box naranja: Ancho={ancho_naranja}\" x Alto={alto_naranja}\"")
             print(f"Tamaño final del PDF: {puntos_a_pulgadas(nuevo_ancho):.3f}\" x {puntos_a_pulgadas(nuevo_alto):.3f}\"")
-
 
     # Guardar el archivo
     output_pdf.save(output_path)
