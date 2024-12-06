@@ -11,6 +11,8 @@ from frappe.model import naming
 
 __all__ = ("agregar_bounding_boxes", )
 
+DEBUG = False
+
 
 def puntos_a_pulgadas(valor):
     """Convierte puntos a pulgadas."""
@@ -54,7 +56,9 @@ def agregar_bounding_boxes(pdf_path: str):
     output_pdf = fitz.open()  # Crear un nuevo documento PDF
 
     for page_num, page in enumerate(doc, start=1):
-        print(f"\nAnalizando y anotando página {page_num}...")
+        if DEBUG:
+            print(f"\nAnalizando y anotando página {page_num}...")
+
         min_x, min_y = float("inf"), float("inf")
         max_x, max_y = float("-inf"), float("-inf")
 
@@ -74,7 +78,8 @@ def agregar_bounding_boxes(pdf_path: str):
                             min_x, min_y = min(min_x, x), min(min_y, y)
                             max_x, max_y = max(max_x, x), max(max_y, y)
                 except Exception as e:
-                    print(f"Error procesando gráfico: {path}, Error: {e}")
+                    if DEBUG:
+                        print(f"Error procesando gráfico: {path}, Error: {e}")
 
         # Textos y bloques
         text_blocks = page.get_text("blocks")
@@ -85,7 +90,9 @@ def agregar_bounding_boxes(pdf_path: str):
 
         # Verificar si hay elementos válidos
         if min_x >= max_x or min_y >= max_y:
-            print(f"No se encontraron elementos válidos en la página {page_num}.")
+            if DEBUG:
+                print(f"No se encontraron elementos válidos en la página {page_num}.")
+
             continue
 
         # Crear Bounding Box Azul
@@ -140,15 +147,19 @@ def agregar_bounding_boxes(pdf_path: str):
         nueva_pagina.draw_rect(rect_naranja, color=(1, 0.5, 0), width=2.0)  # Naranja
         nueva_pagina.draw_rect(rect_azul_centrado, color=(0.5, 0.8, 1), width=1.0)  # Azul
 
-        print(f"Bounding box azul centrado: Ancho={ancho_azul:.3f}\" x Alto={alto_azul:.3f}\"")
-        print(f"Bounding box naranja: Ancho={ancho_naranja}\" x Alto={alto_naranja}\"")
-        print(f"Tamaño final del PDF: {puntos_a_pulgadas(nuevo_ancho):.3f}\" x {puntos_a_pulgadas(nuevo_alto):.3f}\"")
+        if DEBUG:
+            print(f"Bounding box azul centrado: Ancho={ancho_azul:.3f}\" x Alto={alto_azul:.3f}\"")
+            print(f"Bounding box naranja: Ancho={ancho_naranja}\" x Alto={alto_naranja}\"")
+            print(f"Tamaño final del PDF: {puntos_a_pulgadas(nuevo_ancho):.3f}\" x {puntos_a_pulgadas(nuevo_alto):.3f}\"")
+
 
     # Guardar el archivo
     output_pdf.save(output_path)
     output_pdf.close()
     doc.close()
-    print(f"\nArchivo anotado guardado en: {output_path}")
+
+    if DEBUG:
+        print(f"\nArchivo anotado guardado en: {output_path}")
 
 
 def get_pdf_output_name():
