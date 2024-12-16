@@ -156,6 +156,9 @@ fixtures = [
 # Hook on document methods and events
 
 doc_events = {
+	"File": {
+		"on_update": "corterra_app.controllers.file.on_update",
+	},
 	"Orden de Produccion": {
 		"autoname": "corterra_app.client.production_order.autoname",
 	},
