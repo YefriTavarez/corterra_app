@@ -123,6 +123,8 @@ def get_details(quotation_request_id) -> str:
 			request.ancho_tablero As ancho_tablero,
 			request.alto_tablero As alto_tablero,
 			request.pinzas As margen_pinzas_in,
+			request.diseno As diseno,
+			request.pdf_generado As pdf_generado,
 			estimation.plecas_corte As plecas_corte,
 			estimation.plecas_hendido As plecas_hendido,
 			estimation.plecas_perfora As plecas_perfora,
