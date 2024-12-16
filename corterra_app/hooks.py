@@ -15,25 +15,7 @@ fixtures = [
 			"name": [
 				"in", [
 					"Orden de Produccion",
-				],
-			],
-		},
-	},
-	{
-		"dt": "DocType",
-		"filters": {
-			"name": [
-				"in", [
 					"Troqueladora",
-				],
-			],
-		},
-	},
-	{
-		"dt": "DocType",
-		"filters": {
-			"name": [
-				"in", [
 					"Configuracion Corterra",
 				],
 			],
