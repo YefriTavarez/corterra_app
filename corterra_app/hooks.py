@@ -5,6 +5,42 @@ app_description = "Corterra Customizations"
 app_email = "yefritavarez@gmail.com"
 app_license = "mit"
 
+# Fixtures
+# --------
+
+fixtures = [
+	{
+		"dt": "DocType",
+		"filters": {
+			"name": [
+				"in", [
+					"Orden de Produccion",
+				],
+			],
+		},
+	},
+	{
+		"dt": "DocType",
+		"filters": {
+			"name": [
+				"in", [
+					"Troqueladora",
+				],
+			],
+		},
+	},
+	{
+		"dt": "DocType",
+		"filters": {
+			"name": [
+				"in", [
+					"Configuracion Corterra",
+				],
+			],
+		},
+	},
+]
+
 # Apps
 # ------------------
 
