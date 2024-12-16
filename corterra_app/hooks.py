@@ -156,9 +156,13 @@ fixtures = [
 # Hook on document methods and events
 
 doc_events = {
+	"Orden de Produccion": {
+		"autoname": "corterra_app.client.production_order.autoname",
+	},
 	"Sales Order": {
+		"autoname": "corterra_app.client.sales_order.sales_order.autoname",
 		"on_submit": "corterra_app.client.sales_order.sales_order.on_submit",
-	}
+	},
 }
 
 # Scheduled Tasks

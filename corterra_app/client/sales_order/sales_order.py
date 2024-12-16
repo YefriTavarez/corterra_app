@@ -16,6 +16,13 @@ __all__ = (
 )
 
 
+def autoname(doc, method):
+	if not doc.custom_solicitar_cotizacion:
+		frappe.throw("No se ha asociado una Solicitud de Cotización a esta Orden de Venta")
+
+	doc.name = doc.custom_solicitar_cotizacion \
+		.replace("SOL-", "OVE-")
+
 def on_submit(doc, method):
 	if doc.docstatus == 1:
 		make_production_order(doc.name)
@@ -64,7 +71,7 @@ def make_production_order(sales_order_id: str):
 
 	po.flags.ignore_permissions = True
 
-	po.__newname = sales_order_id.replace("OVE-", "OP-")
+	po.flags.sales_order_id = sales_order_id
 
 	try:
 		po.save()
