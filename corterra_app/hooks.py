@@ -162,6 +162,9 @@ doc_events = {
 	"Orden de Produccion": {
 		"autoname": "corterra_app.client.production_order.autoname",
 	},
+	"Quotation": {
+		"autoname": "corterra_app.controllers.quotation.quotation.autoname",
+	},
 	"Sales Order": {
 		"autoname": "corterra_app.client.sales_order.sales_order.autoname",
 		"on_submit": "corterra_app.client.sales_order.sales_order.on_submit",
