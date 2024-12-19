@@ -163,7 +163,7 @@ doc_events = {
 		"autoname": "corterra_app.client.production_order.autoname",
 	},
 	"Quotation": {
-		"autoname": "corterra_app.controllers.quotation.quotation.autoname",
+		"autoname": "corterra_app.controllers.quotation.autoname",
 	},
 	"Sales Order": {
 		"autoname": "corterra_app.client.sales_order.sales_order.autoname",
