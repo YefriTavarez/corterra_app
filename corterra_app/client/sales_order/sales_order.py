@@ -67,6 +67,7 @@ def make_production_order(sales_order_id: str):
 		"cliente": order.customer,
 		"fecha": order.transaction_date,
 		"fecha_compromiso": get_delivery_date(order),
+		"sales_order": sales_order_id,
 	})
 
 	po.flags.ignore_permissions = True
