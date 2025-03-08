@@ -92,4 +92,4 @@ def get_customer_tax_category(name):
 
 
 def get_formatted(serie, value):
-	return f"{serie}-{value:08d}"
+	return f"{serie}{value:08d}"
