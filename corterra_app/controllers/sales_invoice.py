@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.model import document
 
 
 def on_submit(doc, method=None):
@@ -14,8 +15,8 @@ def generate_ncf(doc, autosave=False):
 	if isinstance(doc, str):
 		doc = frappe.parse_json(doc)
 
-	if not isinstance(doc, frappe.model.document.Document):
-		doc = frappe.get_doc(doc)
+	if not isinstance(doc, document.Document):
+		doc = frappe.get_doc(doc.doctype, doc.name)
 
 	# if it's being cancelled and then resubmitted
 	# we don't want to generate a new NCF
