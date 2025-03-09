@@ -169,6 +169,9 @@ doc_events = {
 		"autoname": "corterra_app.client.sales_order.sales_order.autoname",
 		"on_submit": "corterra_app.client.sales_order.sales_order.on_submit",
 	},
+	"Sales Invoice": {
+		"on_submit": "corterra_app.controllers.sales_invoice.on_submit",
+	},
 }
 
 # Scheduled Tasks
