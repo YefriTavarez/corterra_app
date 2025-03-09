@@ -14,6 +14,9 @@ def generate_ncf(doc, autosave=False):
 	if isinstance(doc, str):
 		doc = frappe.parse_json(doc)
 
+	if not isinstance(doc, frappe.model.document.Document):
+		doc = frappe.get_doc(doc)
+
 	# if it's being cancelled and then resubmitted
 	# we don't want to generate a new NCF
 	if doc.amended_from:
