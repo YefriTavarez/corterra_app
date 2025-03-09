@@ -9,38 +9,62 @@ def on_submit(doc, method=None):
 
 
 @frappe.whitelist()
-def generate_ncf(doc):
+def generate_ncf(doc, autosave=False):
+	# if the doc is a string, we need to parse it
+	if isinstance(doc, str):
+		doc = frappe.parse_json(doc)
+
 	# if it's being cancelled and then resubmitted
 	# we don't want to generate a new NCF
 	if doc.amended_from:
-		return
+		return "amended_invoice"
 	
 	# if it's a return, we need to remember the original NCF
 	# and generate a new one
 	if doc.is_return:
+		# validate if the original invoice has an NCF
+		# if not, we can't generate a return NCF
 		if not doc.ncf:
 			frappe.msgprint(
 				"No se ha generado un NCF para esta factura"
 			)
-			return
+			return "return_no_ncf"
 
-		doc.against_ncf = doc.ncf
-		doc.ncf = _generate_ncf(doc, is_return=True)
-	else:
-		doc.ncf = _generate_ncf(doc)
-	
-
-def _generate_ncf(doc, is_return=False):
-	if is_return:
+		# load the NCF for credit notes
 		ncf = get_ncf_for_credit_note()
+
+		# validate if we have a NCF for credit notes
+		# if not, we can't generate a return NCF
+		if not ncf:
+			frappe.throw(
+				"No se ha encontrado ningun Tipo de Comprobante para Notas de Credito"
+			)
+
+		# if the original invoice has an NCF, we need to remember it
+		# and generate a new one
+		doc.against_ncf = doc.ncf
 	else:
 		ncf = get_ncf(doc.customer)
 
-	if not ncf:
-		frappe.throw(
-			"No se ha encontrado ningun Tipo de Comprobante para este cliente"
-		)
+		# validate if we have a NCF for this customer
+		#
+		# if not, we can't generate an NCF
+		if not ncf:
+			frappe.throw(
+				"No se ha encontrado ningun Tipo de Comprobante para este cliente"
+			)
+
+	doc.ncf = _generate_ncf(ncf)
+
+	# if we're autosaving, we have to save the document
+	# before returning the NCF
+	if autosave:
+		doc.save()
+
+	return doc.ncf
+
 	
+def _generate_ncf(ncf):
 	if not ncf.current_value:
 		ncf.current_value = 0
 
