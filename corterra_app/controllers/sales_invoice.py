@@ -59,6 +59,7 @@ def generate_ncf(doc, autosave=False):
 			)
 
 	doc.ncf = _generate_ncf(ncf)
+	doc.sequence_expiration = ncf.expiration_date
 
 	# if we're autosaving, we have to save the document
 	# before returning the NCF
