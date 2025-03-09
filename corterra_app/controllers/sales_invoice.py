@@ -63,7 +63,14 @@ def generate_ncf(doc, autosave=False):
 	# if we're autosaving, we have to save the document
 	# before returning the NCF
 	if autosave:
-		doc.save()
+		if doc.docstatus == 2:
+			frappe.throw(
+				"No se puede guardar un documento cancelado"
+			)
+		elif doc.docstatus == 1:
+			doc.db_update()
+		else:
+			doc.save()
 
 	return doc.ncf
 
