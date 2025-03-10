@@ -59,7 +59,6 @@ def make_delivery_note(production_order_id: str):
 	dn = sales_order.make_delivery_note(
 		source_name=prod.sales_order,
 		target_doc=None,
-		ignore_permissions=True,
 	)
 
 	if dn.is_new():
