@@ -30,7 +30,7 @@ def make_sales_invoice(production_order_id: str):
 	)
 
 	if sinv.is_new():
-		sinv.__newname = production_order_id.replace("OPR-", "FACT-")
+		sinv.flags.production_order_id = production_order_id
 		sinv.insert()
 
 	try:
@@ -67,7 +67,7 @@ def make_delivery_note(production_order_id: str):
 	)
 
 	if dn.is_new():
-		dn.__newname = production_order_id.replace("OPR-", "COND-")
+		dn.flags.production_order_id = production_order_id
 		dn.insert()
 
 	try:

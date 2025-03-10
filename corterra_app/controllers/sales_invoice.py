@@ -5,6 +5,14 @@ import frappe
 from frappe.model import document
 
 
+def autoname(doc, method=None):
+	if not doc.flags.production_order_id:
+		frappe.throw("No se ha asociado una Orden de Produccion a esta Factura de Venta")
+	
+	production_order_id = doc.flags.production_order_id
+	doc.name = production_order_id.replace("OPR-", "FACT-")
+
+
 def on_submit(doc, method=None):
 	generate_ncf(doc)
 
