@@ -41,6 +41,10 @@ def make_sales_invoice(production_order_id: str):
 			"error": str(e),
 		}
 
+	# update the db as the on_submit happens after the db_update
+	if sinv.ncf: 
+		sinv.db_update()
+
 	return {
 		"ok": True,
 		"id": sinv.name,
