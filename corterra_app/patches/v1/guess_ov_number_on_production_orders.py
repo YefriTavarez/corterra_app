@@ -22,6 +22,6 @@ def execute():
         # check if the sales order exists
         # and has docstatus = 1
         if ovid := frappe.db.exists("Sales Order", sales_order_id):
-            production_order.ov_number = ovid
+            production_order.sales_order = ovid
             production_order.db_update()
             frappe.db.commit()
