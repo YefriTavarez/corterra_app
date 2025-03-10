@@ -67,6 +67,7 @@ def make_delivery_note(production_order_id: str):
 	)
 
 	if dn.is_new():
+		dn.__newname = production_order_id.replace("OPR-", "COND-")
 		dn.insert()
 
 	try:
