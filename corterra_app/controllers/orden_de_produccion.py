@@ -30,6 +30,7 @@ def make_sales_invoice(production_order_id: str):
 	)
 
 	if sinv.is_new():
+		sinv.__newname = production_order_id.replace("OPR-", "FACT-")
 		sinv.insert()
 
 	try:
