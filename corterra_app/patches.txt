@@ -6,3 +6,4 @@
 # Patches added in this section will be executed after doctypes are migrated
 corterra_app.patches.v1.guess_ov_number_on_production_orders #2025-03-09
 corterra_app.patches.v1.mark_as_items_as_non_stock
+corterra_app.patches.v1.create_sql_trigger_on_quotation_status
