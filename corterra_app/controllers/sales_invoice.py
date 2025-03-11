@@ -18,7 +18,7 @@ def on_submit(doc, method=None):
 
 
 @frappe.whitelist()
-def generate_ncf(doc, autosave=False):
+def generate_ncf(doc):
 	# if the doc is a string, we need to parse it
 	if isinstance(doc, str):
 		doc = frappe.parse_json(doc)
@@ -54,7 +54,7 @@ def generate_ncf(doc, autosave=False):
 
 		# if the original invoice has an NCF, we need to remember it
 		# and generate a new one
-		doc.against_ncf = doc.ncf
+		doc.db_set("against_ncf", doc.ncf)
 	else:
 		ncf = get_ncf(doc.customer)
 
@@ -66,20 +66,8 @@ def generate_ncf(doc, autosave=False):
 				"No se ha encontrado ningun Tipo de Comprobante para este cliente"
 			)
 
-	doc.ncf = _generate_ncf(ncf)
-	doc.sequence_expiration = ncf.expiration_date
-
-	# if we're autosaving, we have to save the document
-	# before returning the NCF
-	if autosave:
-		if doc.docstatus == 2:
-			frappe.throw(
-				"No se puede guardar un documento cancelado"
-			)
-		elif doc.docstatus == 1:
-			doc.db_update()
-		else:
-			doc.save()
+	doc.db_set("ncf", _generate_ncf(ncf))
+	doc.db_set("sequence_expiration", ncf.expiration_date)
 
 	return doc.ncf
 
