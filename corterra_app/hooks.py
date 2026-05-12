@@ -171,7 +171,6 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"autoname": "corterra_app.controllers.sales_invoice.autoname",
-		"on_submit": "corterra_app.controllers.sales_invoice.on_submit",
 	},
 	"Delivery Note": {
 		"autoname": "corterra_app.controllers.delivery_note.autoname",
