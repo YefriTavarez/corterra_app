@@ -26,7 +26,7 @@ fixtures = [
 # Apps
 # ------------------
 
-# required_apps = []
+required_apps = ["nubef"]
 
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
@@ -171,6 +171,8 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"autoname": "corterra_app.controllers.sales_invoice.autoname",
+		"before_submit": "corterra_app.controllers.sales_invoice_fiscal.ensure_encf_before_submit",
+		"on_submit": "corterra_app.controllers.sales_invoice_fiscal.send_encf_to_alanube",
 	},
 	"Delivery Note": {
 		"autoname": "corterra_app.controllers.delivery_note.autoname",
