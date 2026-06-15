@@ -171,8 +171,6 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"autoname": "corterra_app.controllers.sales_invoice.autoname",
-		"before_submit": "corterra_app.controllers.sales_invoice_fiscal.ensure_encf_before_submit",
-		"on_submit": "corterra_app.controllers.sales_invoice_fiscal.send_encf_to_alanube",
 	},
 	"Delivery Note": {
 		"autoname": "corterra_app.controllers.delivery_note.autoname",
@@ -182,23 +180,11 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"corterra_app.tasks.all"
-# 	],
-# 	"daily": [
-# 		"corterra_app.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"corterra_app.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"corterra_app.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"corterra_app.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"hourly": [
+		"corterra_app.controllers.sales_invoice_fiscal.process_pending_sales_invoice_fiscal",
+	],
+}
 
 # Testing
 # -------

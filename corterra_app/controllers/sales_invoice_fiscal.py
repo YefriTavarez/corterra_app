@@ -8,11 +8,7 @@ from typing import Any
 import frappe
 
 from nubef.api.alanube_company import get_alanube_company_details, is_alanube_company
-from nubef.api.invoice_submission import (
-	SENDABLE_NCF_STATUSES,
-	apply_skip_auto_post_flag,
-	should_defer_erpnext_submit_until_alanube_receipt,
-)
+from nubef.api.invoice_submission import SENDABLE_NCF_STATUSES
 from nubef.api.ncf_sequence import (
 	get_sequence_info,
 	get_sequence_name_for_credit_note,
@@ -31,9 +27,88 @@ def should_use_nubef_fiscal(doc: Any) -> bool:
 	return bool(settings.get("enabled")) and bool(settings.get("manage_ncfs_from_alanubes"))
 
 
+def get_alanube_fiscal_companies() -> list[str]:
+	"""Return ERPNext company names configured for nubef-managed eNCF."""
+	return frappe.get_all(
+		"Alanube Company",
+		filters={"enabled": 1, "manage_ncfs_from_alanubes": 1},
+		pluck="company",
+	) or []
+
+
+def get_pending_sales_invoice_names() -> list[str]:
+	"""Return submitted Sales Invoices that still need eNCF assignment or Alanube send."""
+	companies = get_alanube_fiscal_companies()
+	if not companies:
+		return []
+
+	sendable_statuses = [status for status in SENDABLE_NCF_STATUSES if status]
+
+	missing_ncf = frappe.get_all(
+		"Sales Invoice",
+		filters={
+			"docstatus": 1,
+			"company": ["in", companies],
+		},
+		or_filters=[
+			["ncf", "is", "not set"],
+			["ncf", "=", ""],
+		],
+		pluck="name",
+	)
+
+	pending_send = frappe.get_all(
+		"Sales Invoice",
+		filters={
+			"docstatus": 1,
+			"company": ["in", companies],
+			"ncf_status": ["in", sendable_statuses],
+		},
+		or_filters=[
+			["ncf", "is", "set"],
+			["ncf", "!=", ""],
+		],
+		pluck="name",
+	)
+
+	return list(dict.fromkeys(missing_ncf + pending_send))
+
+
+def process_pending_sales_invoice_fiscal() -> None:
+	"""Hourly scheduler entry: assign eNCF and send pending submitted invoices to Alanube."""
+	for sales_invoice_name in get_pending_sales_invoice_names():
+		try:
+			process_sales_invoice_fiscal(sales_invoice_name)
+			frappe.db.commit()
+		except Exception:
+			frappe.db.rollback()
+			frappe.log_error(
+				title=f"Sales Invoice fiscal processing failed for {sales_invoice_name}",
+				message=frappe.get_traceback(),
+			)
+
+
+def process_sales_invoice_fiscal(sales_invoice_name: str) -> bool:
+	"""Assign eNCF (if missing) and send a submitted invoice to Alanube when applicable."""
+	doc = frappe.get_doc("Sales Invoice", sales_invoice_name)
+	if doc.docstatus != 1 or not should_use_nubef_fiscal(doc):
+		return False
+
+	processed = False
+	if not doc.ncf:
+		if assign_encf_to_invoice(doc):
+			doc.reload()
+			processed = True
+
+	if doc.ncf and send_pending_invoice_to_alanube(doc):
+		processed = True
+
+	return processed
+
+
 def assign_encf_to_invoice(doc: Any) -> bool:
 	"""Assign the next eNCF from nubef NCF Sequence when the invoice has none."""
-	if getattr(doc, "docstatus", 0) != 0:
+	if getattr(doc, "docstatus", 0) not in (0, 1):
 		return False
 	if not should_use_nubef_fiscal(doc):
 		return False
@@ -51,43 +126,39 @@ def assign_encf_to_invoice(doc: Any) -> bool:
 	doc.ncf = ncf
 	doc.sequence_due_date = sequence_due_date
 	_populate_dgii_reference_information(doc)
-	doc.flags.corterra_encf_auto_assigned = True
+
+	if doc.docstatus == 1:
+		_persist_submitted_encf(doc, ncf, sequence_due_date)
+
 	return True
 
 
-def send_to_alanube_if_needed(doc: Any) -> bool:
-	"""Send the invoice to Alanube when it was auto-assigned an eNCF in this submit flow."""
-	if not _has_flag(doc, "corterra_encf_auto_assigned"):
-		return False
-	if _has_flag(doc, "corterra_encf_sent_to_alanube"):
+def send_pending_invoice_to_alanube(doc: Any) -> bool:
+	"""Send a submitted invoice to Alanube when it has a sendable NCF status."""
+	if getattr(doc, "docstatus", 0) != 1:
 		return False
 	if not getattr(doc, "ncf", None):
 		return False
-
-	ncf_status = getattr(doc, "ncf_status", None)
-	if ncf_status not in SENDABLE_NCF_STATUSES:
+	if getattr(doc, "ncf_status", None) not in SENDABLE_NCF_STATUSES:
 		return False
 
 	_send_to_alanube(doc.name)
-	apply_skip_auto_post_flag(doc, True)
-	doc.flags.corterra_encf_sent_to_alanube = True
 	return True
 
 
-def ensure_encf_before_submit(doc: Any, method: str | None = None) -> None:
-	"""Assign eNCF before submit and pre-send when Alanube receipt is required first."""
-	if getattr(doc, "docstatus", 0) != 0:
+def _persist_submitted_encf(doc: Any, ncf: str, sequence_due_date) -> None:
+	needs_full_save = bool(doc.get("return_against") and doc.get("dgii_additional_information"))
+	if needs_full_save:
+		doc.flags.ignore_permissions = True
+		doc.save()
 		return
 
-	assign_encf_to_invoice(doc)
-
-	if should_defer_erpnext_submit_until_alanube_receipt(getattr(doc, "company", None)):
-		send_to_alanube_if_needed(doc)
-
-
-def send_encf_to_alanube(doc: Any, method: str | None = None) -> None:
-	"""Send auto-assigned eNCF invoices to Alanube after ERPNext submit."""
-	send_to_alanube_if_needed(doc)
+	doc.db_set(
+		{
+			"ncf": ncf,
+			"sequence_due_date": sequence_due_date,
+		}
+	)
 
 
 def _resolve_sequence_name(doc: Any) -> str | None:
@@ -139,8 +210,3 @@ def _send_to_alanube(document_id: str):
 	from nubef.api.sales_invoice import send_to_alanube
 
 	return send_to_alanube(document_id)
-
-
-def _has_flag(doc: Any, key: str) -> bool:
-	flags = getattr(doc, "flags", None)
-	return bool(getattr(flags, key, False))
